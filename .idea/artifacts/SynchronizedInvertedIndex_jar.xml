@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SynchronizedInvertedIndex:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SynchronizedInvertedIndex_jar</output-path>
+    <root id="archive" name="SynchronizedInvertedIndex.jar">
+      <element id="module-output" name="SynchronizedInvertedIndex" />
+    </root>
+  </artifact>
+</component>

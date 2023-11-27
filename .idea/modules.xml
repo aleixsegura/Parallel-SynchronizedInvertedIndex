@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/InvertedIndexConc.iml" filepath="$PROJECT_DIR$/InvertedIndexConc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SynchronizedInvertedIndex.iml" filepath="$PROJECT_DIR$/SynchronizedInvertedIndex.iml" />
     </modules>
   </component>
 </project>
