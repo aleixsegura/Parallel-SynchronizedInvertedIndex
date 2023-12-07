@@ -21,4 +21,7 @@ public class Location{
     }
 
 
+    public long getFileId() {
+        return fileId;
+    }
 }

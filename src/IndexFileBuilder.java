@@ -42,6 +42,6 @@ public class IndexFileBuilder implements Runnable {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-
+        Indexing.latch.countDown();
     }
 }

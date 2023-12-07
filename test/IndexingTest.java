@@ -18,7 +18,6 @@ public class IndexingTest {
     public void testNumOfFiles() throws InterruptedException {
         Indexing.setApp(app);
         app.searchTxtFiles(app.getAppInputDir());
-        app.joinThread(app.getFileFinder());
         app.saveFileIds();
         assertEquals(24, app.getFilesIdsMap().size());
     }
@@ -27,18 +26,15 @@ public class IndexingTest {
     public void testSomeInvertedIndexKeys() throws InterruptedException{
         Indexing.setApp(app);
         app.searchTxtFiles(app.getAppInputDir());
-        app.joinThread(app.getFileFinder());
         app.saveFileIds();
 
         app.buildFileLinesContent();
         app.joinThreads(app.getLinesContentVirtualThreads());
-        app.addToGlobalLinesContent();
         app.constructFileLinesContent();
         app.constructSameSizeFileLines();
 
         app.constructInvertedIndex();
         app.joinThreads(app.getInvertedIndexBuilders());
-        app.addToGlobalUnsortedInvertedIndex();
 
         var invertedIndex = app.sortGlobalInvertedIndex();
 
@@ -59,18 +55,15 @@ public class IndexingTest {
     public void testDifferentLocations() throws InterruptedException{
         Indexing.setApp(app);
         app.searchTxtFiles(app.getAppInputDir());
-        app.joinThread(app.getFileFinder());
         app.saveFileIds();
 
         app.buildFileLinesContent();
         app.joinThreads(app.getLinesContentVirtualThreads());
-        app.addToGlobalLinesContent();
         app.constructFileLinesContent();
         app.constructSameSizeFileLines();
 
         app.constructInvertedIndex();
         app.joinThreads(app.getInvertedIndexBuilders());
-        app.addToGlobalUnsortedInvertedIndex();
 
         var invertedIndex = app.sortGlobalInvertedIndex();
 

@@ -6,18 +6,16 @@ Grau Informàtica
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
 import java.io.*;
-import java.util.HashMap;
+
 
 public class ReadFile implements Runnable{
     public static Indexing app;
     private final Long fileId;
     private final File fileToRead;
-    private final HashMap<Location, String> filesLinesContent;
 
     public ReadFile(Long fileId, File fileToRead){
         this.fileId = fileId;
         this.fileToRead = fileToRead;
-        filesLinesContent = new HashMap<>();
     }
 
     /**
@@ -30,15 +28,15 @@ public class ReadFile implements Runnable{
             Long lineNumber = 1L;
             while ((line = br.readLine()) != null){
                 Location location = new Location(fileId, lineNumber);
-                filesLinesContent.put(location, line);
-                lineNumber++;
+                synchronized (app.getFileLines()){
+                    app.getFileLines().put(location, line);
+                    lineNumber++;
+                }
             }
+            Indexing.semaphore.release();
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
-
-    public HashMap<Location, String> getLocalFilesLinesContent(){ return filesLinesContent; }
-
 }

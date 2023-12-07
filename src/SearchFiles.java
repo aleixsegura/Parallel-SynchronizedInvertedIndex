@@ -6,13 +6,17 @@ Grau Informàtica
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
 
 public class SearchFiles implements Runnable {
     public static Indexing app;
+
     private final File[] files;
+    private CountDownLatch latch;
     private long fileId = 1L;
-    public SearchFiles(File[] files) {
+    public SearchFiles(File[] files, CountDownLatch latch) {
         this.files = files;
+        this.latch = latch;
     }
 
     /**
@@ -28,6 +32,7 @@ public class SearchFiles implements Runnable {
             } else if (file.isDirectory())
                 recursiveSearch(file);
         }
+        latch.countDown();
     }
 
     /**
