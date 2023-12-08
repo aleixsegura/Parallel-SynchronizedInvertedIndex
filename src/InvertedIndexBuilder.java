@@ -8,10 +8,9 @@ Grau Informàtica
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -20,19 +19,17 @@ import java.util.concurrent.locks.ReentrantLock;
 public class InvertedIndexBuilder implements Runnable{
 
     private static final Lock lock = new ReentrantLock(true);
-    private static Condition varCond = lock.newCondition();
-
+    private static final Condition varCond = lock.newCondition();
 
     // Globals
     private static int globalProcessingFiles = 0;
     private static int globalProcessedFiles = 0;
     private static long globalProcessedLines = 0;
-    private static long globalProcessedWords = 0;
     private static long globalProcessedLocations = 0;
-    private static long globalUniqueWords = 0;
     private static String globalMostPopularWord = "";
     private static long globalMostPopularWordAppearances = 0;
-    private static AtomicBoolean lastIter = new AtomicBoolean(false);
+    private static final AtomicBoolean lastIter = new AtomicBoolean(false);
+    private static final HashSet<String> globalWords = new HashSet<>();
 
     // Locals
     int processingFiles = 0;
@@ -40,15 +37,14 @@ public class InvertedIndexBuilder implements Runnable{
     private long processedLines = 0;
     private long processedWords = 0;
     private long processedLocations = 0;
-    private long uniqueWords = 0;
     private String mostPopularWord = "";
     private long mostPopularWordAppearances = 0;
 
     private static final Runnable printGlobalStatistics = () -> {
         System.out.print(Indexing.STATISTICS_BLUE);
         System.out.println("_____________________________________ " + "[Threads Globals]" + " ___________________________________________________________________________________________");
-        System.out.printf("__ Processed Parts of Files:     %-10s__ Processing Parts of Files: %-10s__ Processed Lines:   %-10s__ Processed Words: %-10s__%n", globalProcessedFiles, globalProcessingFiles, globalProcessedLines, globalProcessedWords);
-        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", globalProcessedLocations, globalUniqueWords, globalMostPopularWord, globalMostPopularWordAppearances);
+        System.out.printf("__ Processed Parts of Files:     %-10s__ Processing Parts of Files: %-10s__ Processed Lines:   %-10s__ Processed Words: %-10s__%n", globalProcessedFiles, globalProcessingFiles, globalProcessedLines, globalWords.size());
+        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", globalProcessedLocations, globalWords.size(), globalMostPopularWord, globalMostPopularWordAppearances);
         System.out.println("___________________________________________________________________________________________________________________________________________________");
         System.out.print(Indexing.RESET_COLOR);
         if (!lastIter.get())
@@ -57,7 +53,6 @@ public class InvertedIndexBuilder implements Runnable{
     private static final CyclicBarrier barrier = new CyclicBarrier(Indexing.threadsSize, printGlobalStatistics);
 
     private static final Phaser phaser = Indexing.phaser;
-
 
     HashMap<Long, Integer> filesToProcessAndPendingWords = new HashMap<>();
 
@@ -76,7 +71,7 @@ public class InvertedIndexBuilder implements Runnable{
 
     /**
      * For each word in each entry of the localMap we build the inverted index checking if the location is already in
-     * the local inverted index or not. Then we add the localInvertedIndex to the globalInvertedIndex.
+     * the local inverted index or not.
      */
     @Override
     public void run() {
@@ -100,6 +95,10 @@ public class InvertedIndexBuilder implements Runnable{
                 processedWords++;
                 word = word.toLowerCase();
 
+                synchronized (globalWords){
+                    globalWords.add(word);
+                }
+
                 localInvertedIndex.merge(word, locationsBuilder.toString(), (existing, newLocation) -> {
                     if (!existing.contains(toStringLocation)) {
                         processedLocations++;
@@ -110,7 +109,7 @@ public class InvertedIndexBuilder implements Runnable{
                 if (filesToProcessAndPendingWords.containsKey(fileId)){
                     filesToProcessAndPendingWords.compute(fileId, (id, count) -> (count != null) ? count - 1 : 0);
                 }
-                if (processedWords % app.getM() == 0){
+                if (processedWords % app.getM() == 0) {
                     try {
                         computeLocalStatistics();
                         showLocalStatistics();
@@ -151,7 +150,6 @@ public class InvertedIndexBuilder implements Runnable{
     }
 
     private void computeLocalStatistics(){
-        uniqueWords = localInvertedIndex.size();
         computeMostPopularWord();
         processingFiles = computeProcessingFiles();
         processedFiles = computeProcessedFiles();
@@ -194,12 +192,11 @@ public class InvertedIndexBuilder implements Runnable{
     }
 
 
-
-    private void showLocalStatistics() {
+    private synchronized void showLocalStatistics() {
         System.out.print(Indexing.STATISTICS_BLUE);
         System.out.println("_____________________________________ " + "[Thread " + threadId + "] _________________________________________________________________________________________________");
         System.out.printf("__ Processed Parts of Files:     %-10s__ Processing Parts of Files: %-10s__ Processed Lines:   %-10s__ Processed Words: %-10s__%n", processedFiles, processingFiles, processedLines, processedWords);
-        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", processedLocations, uniqueWords, mostPopularWord, mostPopularWordAppearances);
+        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", processedLocations, localInvertedIndex.size(), mostPopularWord, mostPopularWordAppearances);
         System.out.println("___________________________________________________________________________________________________________________________________________________");
         System.out.print(Indexing.RESET_COLOR);
     }
@@ -209,10 +206,8 @@ public class InvertedIndexBuilder implements Runnable{
         lock.lock();
         globalProcessedFiles += processedFiles;
         globalProcessingFiles += processingFiles;
-        globalUniqueWords += uniqueWords;
         globalProcessedLines += processedLines;
         globalProcessedLocations += processedLocations;
-        globalProcessedWords += processedWords; // be
         if (mostPopularWordAppearances > globalMostPopularWordAppearances){
             globalMostPopularWord = mostPopularWord;
             globalMostPopularWordAppearances = mostPopularWordAppearances;
@@ -223,10 +218,8 @@ public class InvertedIndexBuilder implements Runnable{
     private static void resetPartialGlobals(){
         globalProcessingFiles = 0;
         globalProcessedFiles = 0;
-        globalUniqueWords = 0;
         globalProcessedLines = 0;
         globalProcessedLocations = 0;
-        globalProcessedWords = 0;
         globalMostPopularWord = "";
         globalMostPopularWordAppearances = 0;
     }
@@ -243,4 +236,5 @@ public class InvertedIndexBuilder implements Runnable{
 
     public static long getGlobalProcessedLocations() { return globalProcessedLocations;}
     public static long getGlobalProcessedLines() { return globalProcessedLines; }
+    public static long getGlobalProcessedWords() { return globalWords.size();}
 }

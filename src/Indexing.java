@@ -344,8 +344,8 @@ public class Indexing {
     private void printFinalStatistics(){
         System.out.print(STATISTICS_BLUE);
         System.out.println("_____________________________________ " + "[Finals]" + " ____________________________________________________________________________________________________");
-        System.out.printf("__ Processed Files:              %-10s__ Processing Files:          %-10s__ Processed Lines:   %-10s__ Processed Words: %-10s__%n", app.getFilesIdsMap().size(), 0, InvertedIndexBuilder.getGlobalProcessedLines(), app.invertedIndex.size());
-        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", InvertedIndexBuilder.getGlobalProcessedLocations(), app.invertedIndex.size(), app.computeFinalMostPopularWord(), mostPopularFinalWordAppearances);
+        System.out.printf("__ Processed Files:              %-10s__ Processing Files:          %-10s__ Processed Lines:   %-10s__ Processed Words: %-10s__%n", app.getFilesIdsMap().size(), 0, InvertedIndexBuilder.getGlobalProcessedLines(), InvertedIndexBuilder.getGlobalProcessedWords());
+        System.out.printf("__ Processed Locations:          %-10s__ Found Keys:                %-10s__ Most Popular word: %-10s__ Locations:       %-10s__%n", InvertedIndexBuilder.getGlobalProcessedLocations(), InvertedIndexBuilder.getGlobalProcessedWords(), app.computeFinalMostPopularWord(), mostPopularFinalWordAppearances);
         System.out.println("___________________________________________________________________________________________________________________________________________________");
         System.out.print(RESET_COLOR);
     }
